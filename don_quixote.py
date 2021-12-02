@@ -13,8 +13,9 @@ game_active = True
 score = 0
 with open('score_keep.json', 'r') as f:
     high_score = f.read()
-# background = pygame.image.load('Assets/mirror.jpg').convert()
-# background = pygame.transform.scale(background, (WIDTH, HEIGHT - 150))
+game_state = "menu"
+background = pygame.image.load('Assets/prison.jpg').convert()
+background = pygame.transform.scale(background, (WIDTH, HEIGHT - 150))
 
 base = pygame.image.load('Assets/base.png').convert()
 base = pygame.transform.scale(base, (WIDTH, 150))
@@ -68,13 +69,6 @@ def check_collision(mirrors):
 
 
 def score_display(game_state):
-    if game_state == "menu":
-        message_surface = game_font.render(f'Welcome', False, (0, 0, 0))
-        message_rect = message_surface.get_rect(center = (WIDTH/2, HEIGHT/2))
-        start_surface = game_font.render(f'Press SPACE to Start', False, (0, 0, 0))
-        start_rect = message_surface.get_rect(center = (WIDTH/2, HEIGHT/2 + 40))
-        screen.blit(message_surface, message_rect)
-        screen.blit(start_surface, start_rect)
     if game_state == "main_game":
         score_surface = game_font.render(f'Score: {str(int(score))}', False, (255, 255, 255))
         score_rect = score_surface.get_rect(center = (75, 50))
@@ -92,30 +86,49 @@ def score_display(game_state):
             json.dump(int(high_score), f, indent=4)
 
 
+def menu_display():
+    message_surface = game_font.render(f'Welcome', False, (255, 255, 255))
+    message_rect = message_surface.get_rect(center = (WIDTH/2, HEIGHT/2))
+    start_surface = game_font.render(f'Press SPACE to Start', False, (255, 255, 255))
+    start_rect = message_surface.get_rect(center = (WIDTH/2, HEIGHT/2 + 40))
+    screen.blit(message_surface, message_rect)
+    screen.blit(start_surface, start_rect)
+
 running = True
 while running:
     for event in pygame.event.get(): 
         if event.type == pygame.QUIT:
             pygame.quit()
             sys.exit()
-        if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_SPACE:
-                char_movement = 0
-                char_movement -= 6
-            if event.key == pygame.K_SPACE and game_active == False:
-                game_active = True
-                mirror_list.clear()
-                char_rect.center = (100, 325)
-                char_movement = 0
-                score = 0
+        
+        if game_state == "menu":
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_SPACE:
+                    game_state = "main_game"
+        else:
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_SPACE:
+                    char_movement = 0
+                    char_movement -= 6
+                if event.key == pygame.K_SPACE and game_active == False:
+                    game_active = True
+                    mirror_list.clear()
+                    char_rect.center = (100, 325)
+                    char_movement = 0
+                    score = 0
 
-        if event.type == SPAWNMIRROR:
-            mirror_list.extend(create_mirror())
+            if event.type == SPAWNMIRROR:
+                mirror_list.extend(create_mirror())
     # screen.blit(background, (0, 0))
-    screen.fill((255, 153, 0))
+    if game_state != "menu":
+        screen.fill((255, 153, 0))
+    else:
+        screen.blit(background, (0, 0))
+        menu_display()
+        
 
     #Char
-    if game_active:
+    if game_active and game_state != "menu":
         char_movement += gravity
         char_rect.centery += char_movement
         screen.blit(don_quixote, char_rect)
@@ -127,10 +140,11 @@ while running:
         score += 0.01
         score_display("main_game")
     else:
-        screen.blit(game_over_surface, game_over_rect)
-        if int(score) >= int(high_score):
-            high_score = score
-        score_display("game_over")
+        if game_state != "menu":
+            screen.blit(game_over_surface, game_over_rect)
+            if int(score) >= int(high_score):
+                high_score = score
+            score_display("game_over")
 
 
     base_x_pos -= 1
